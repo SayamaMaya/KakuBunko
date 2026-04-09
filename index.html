@@ -257,7 +257,7 @@
             const title = titleInput.value.trim();
             const author = authorInput.value.trim();
             // ポスト形式を修正: ハッシュタグ、タイトル、著者の順
-            const text = `#架空文庫メーカー\n『${title}』\n著者：${author} \nあなたの本がゲームの背景になるかも！作成はここから↓ \nhttps://sayamamaya.github.io/KakuBunko/`;
+            const text = `#架空文庫メーカー\n『${title}』\n著者：${author} \n\nあなたの本がゲームの背景になるかも！作成はここから↓ \nhttps://sayamamaya.github.io/KakuBunko/`;
             const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
         };
