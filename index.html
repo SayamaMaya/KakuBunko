@@ -56,6 +56,20 @@
         .color-dot.active {
             box-shadow: 0 0 0 2px #000;
         }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 1rem;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -125,7 +139,9 @@
                     保存した画像を X でポスト
                 </button>
                 <p>※自動では画像添付されません！画像を保存してから、保存した画像を添付の上ポストしてください！</p>
-                <iframe width="560" height="315" src="https://www.youtube.com/embed/5B3O0r_RgY0?si=Bdq78ABtLkVuqZ6z" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                <div class="video-container">
+                    <iframe src="https://www.youtube.com/embed/5B3O0r_RgY0?si=Bdq78ABtLkVuqZ6z" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
             </div>
         </div>
     </div>
@@ -175,11 +191,20 @@
             const chars = text.split('');
             chars.forEach((char, i) => {
                 const y = startY + (i * (fontSize + spacing));
-                const rotateChars = ['ー', '―', '-', '～', '「', '」', '（', '）', '『', '』', '、', '。'];
+                const rotateChars = ['ー', '―', '-', '～', '「', '」', '（', '）', '『', '』', '［', '］', '【', '】'];
+                // 句読点・小書き文字・促音の判定
+                const puncChars = ['、', '。', '，', '．', 'っ', 'ゃ', 'ゅ', 'ょ', 'ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'ッ', 'ャ', 'ュ', 'ョ', 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ヶ', 'ヵ'];
+
                 if (rotateChars.includes(char)) {
                     ctx.save();
-                    ctx.translate(x, y);
+                    ctx.translate(x, y - fontSize * 0.1);
                     ctx.rotate(Math.PI / 2);
+                    ctx.fillText(char, 0, 0);
+                    ctx.restore();
+                } else if (puncChars.includes(char)) {
+                    // 座標を計算して右上に寄せる
+                    ctx.save();
+                    ctx.translate(x + (fontSize * 0.25), y - (fontSize * 0.25));
                     ctx.fillText(char, 0, 0);
                     ctx.restore();
                 } else {
@@ -258,7 +283,6 @@
         shareXBtn.onclick = () => {
             const title = titleInput.value.trim();
             const author = authorInput.value.trim();
-            // ポスト形式を修正: ハッシュタグ、タイトル、著者の順
             const text = `#架空文庫メーカー\n『${title}』\n著者：${author} \n\nあなたの本がゲームの背景になるかも！作成はここから↓ \nhttps://sayamamaya.github.io/KakuBunko/ \nhttps://x.com/sayama_live/status/2045069877095043442?s=61`;
             const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
