@@ -122,7 +122,7 @@
             </div>
         </div>
 
-        <!-- プレビュー -->
+        <!-- プレビュー表示 -->
         <div class="flex flex-col gap-6">
             <div class="preview-area bg-gray-100 border border-gray-200 p-8">
                 <canvas id="spineCanvas"></canvas>
@@ -163,11 +163,8 @@
 
         const colors = [
             { hex: '#FFFFFF' }, { hex: '#F9F9F9' }, { hex: '#E5E7EB' },
-            { hex: '#FEF3C7' }, 
-            { hex: '#C7F0F5' },
-            { hex: '#DBEAFE' },
-            { hex: '#FCE7F3' }, { hex: '#F5F5DC' },
-            { hex: '#E0D7FF' },
+            { hex: '#FEF3C7' }, { hex: '#C7F0F5' }, { hex: '#DBEAFE' },
+            { hex: '#FCE7F3' }, { hex: '#F5F5DC' }, { hex: '#E0D7FF' },
             { hex: '#FFD7D7' }
         ];
 
@@ -187,31 +184,35 @@
         });
 
         function drawVerticalText(text, x, startY, fontSize, spacing, fontFamily, weight) {
-            ctx.font = `${weight} ${fontSize}px ${fontFamily}`;
-            const chars = text.split('');
+            const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' });
+            const segments = Array.from(segmenter.segment(text));
+            const chars = segments.map(s => s.segment);
+
             chars.forEach((char, i) => {
                 const y = startY + (i * (fontSize + spacing));
                 const rotateChars = ['ー', '―', '-', '～', '「', '」', '（', '）', '『', '』', '［', '］', '【', '】'];
-                // 句読点・小書き文字・促音の判定
-                const puncChars = ['、', '。', '，', '．', 'っ', 'ゃ', 'ゅ', 'ょ', 'ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'ッ', 'ャ', 'ュ', 'ョ', 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ヶ', 'ヵ'];
+                const puncChars = ['、', '。', '，', '．'];
+
+                ctx.save();
+                ctx.font = `${weight} ${fontSize}px ${fontFamily}`;
+                ctx.fillStyle = '#000000';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
 
                 if (rotateChars.includes(char)) {
-                    ctx.save();
-                    ctx.translate(x, y - fontSize * 0.1);
+                    ctx.translate(x, y);
                     ctx.rotate(Math.PI / 2);
                     ctx.fillText(char, 0, 0);
-                    ctx.restore();
                 } else if (puncChars.includes(char)) {
-                    // 座標を計算して右上に寄せる
-                    ctx.save();
-                    ctx.translate(x + (fontSize * 0.25), y - (fontSize * 0.25));
+                    // 句読点を右の際（fontSizeの0.7倍）に寄せる
+                    ctx.translate(x + (fontSize * 0.7), y - (fontSize * 0.4));
                     ctx.fillText(char, 0, 0);
-                    ctx.restore();
                 } else {
+                    // 全ての文字を黒（白黒描画）で描画
                     ctx.fillText(char, x, y);
                 }
+                ctx.restore();
             });
-            return chars.length * (fontSize + spacing);
         }
 
         function draw() {
@@ -222,13 +223,17 @@
             
             const titleFontSize = 30;
             const authorFontSize = 18;
-            const spacing = 8;
+            const spacing = 12;
             const groupGap = 60;
             const marginY = 100;
             const spineWidth = 140;
 
-            const titleHeight = title.length * (titleFontSize + spacing);
-            const authorHeight = author ? author.length * (authorFontSize + spacing) : 0;
+            const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' });
+            const titleSegments = Array.from(segmenter.segment(title));
+            const authorSegments = Array.from(segmenter.segment(author));
+
+            const titleHeight = titleSegments.length * (titleFontSize + spacing);
+            const authorHeight = author ? authorSegments.length * (authorFontSize + spacing) : 0;
             const totalContentHeight = titleHeight + (author ? groupGap + authorHeight : 0);
             const canvasHeight = Math.max(600, totalContentHeight + marginY * 2);
 
@@ -251,11 +256,8 @@
             ctx.beginPath(); ctx.moveTo(35, 55); ctx.lineTo(spineWidth - 35, 55); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(35, canvasHeight - 55); ctx.lineTo(spineWidth - 35, canvasHeight - 55); ctx.stroke();
 
-            ctx.fillStyle = '#000';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
             const contentStartY = (canvasHeight / 2) - (totalContentHeight / 2);
+            
             drawVerticalText(title, spineWidth / 2, contentStartY + (titleFontSize / 2), titleFontSize, spacing, fontFamily, fontWeight);
 
             if (author) {
@@ -265,6 +267,7 @@
 
             ctx.fillStyle = '#666';
             ctx.font = `400 12px ${fontFamily}`;
+            ctx.textAlign = 'center';
             ctx.fillText('架空文庫', spineWidth / 2, canvasHeight - 40);
 
             previewImg.src = canvas.toDataURL('image/png');
@@ -283,7 +286,7 @@
         shareXBtn.onclick = () => {
             const title = titleInput.value.trim();
             const author = authorInput.value.trim();
-            const text = `#架空文庫メーカー\n『${title}』\n著者：${author} \n\nあなたの本がゲームの背景になるかも！作成はここから↓ \nhttps://sayamamaya.github.io/KakuBunko/ \nhttps://x.com/sayama_live/status/2045069877095043442?s=61`;
+            const text = `#架空文庫メーカー\n『${title}』\n著者：${author} \n\n作成はここから↓ \nhttps://sayamamaya.github.io/KakuBunko/`;
             const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
         };
